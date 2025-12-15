@@ -6,32 +6,32 @@
 /*   By: melkhatr <melkhatr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 13:18:39 by melkhatr          #+#    #+#             */
-/*   Updated: 2025/12/13 15:06:15 by melkhatr         ###   ########.fr       */
+/*   Updated: 2025/12/15 11:30:42 by melkhatr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "cub3d.h"
 
-int	check_file_extension(char *filename)
+static int	parse_texture_element(char *trimmed, t_data *data)
 {
-	int	len;
-
-	len = ft_strlen(filename);
-	if (len < 5)
-		return (0);
-	if (ft_strcmp(filename + len - 4, ".cub") != 0)
-		return (0);
-	return (1);
+	if (trimmed[0] == 'N' && trimmed[1] == 'O' && trimmed[2] == ' ')
+		return (parse_texture(trimmed + 3, &data->textures.north));
+	else if (trimmed[0] == 'S' && trimmed[1] == 'O' && trimmed[2] == ' ')
+		return (parse_texture(trimmed + 3, &data->textures.south));
+	else if (trimmed[0] == 'E' && trimmed[1] == 'A' && trimmed[2] == ' ')
+		return (parse_texture(trimmed + 3, &data->textures.east));
+	else if (trimmed[0] == 'W' && trimmed[1] == 'E' && trimmed[2] == ' ')
+		return (parse_texture(trimmed + 3, &data->textures.west));
+	return (-2);
 }
 
-int	all_elements_parsed(t_data *data)
+static int	parse_color_element(char *trimmed, t_data *data)
 {
-	if (!data->textures.north || !data->textures.south || !data->textures.east
-		|| !data->textures.west)
-		return (0);
-	if (data->floor.r == -1 || data->ceiling.r == -1)
-		return (0);
-	return (1);
+	if (trimmed[0] == 'F' && trimmed[1] == ' ')
+		return (parse_color(trimmed + 2, &data->floor));
+	else if (trimmed[0] == 'C' && trimmed[1] == ' ')
+		return (parse_color(trimmed + 2, &data->ceiling));
+	return (-2);
 }
 
 int	parse_element(char *line, t_data *data)
@@ -41,24 +41,16 @@ int	parse_element(char *line, t_data *data)
 
 	trimmed = ft_strtrim(line);
 	if (!trimmed || trimmed[0] == '\0' || trimmed[0] == '\n')
-		return (free(trimmed), 0);
-	ret = 0;
-	if (trimmed[0] == 'N' && trimmed[1] == 'O' && trimmed[2] == ' ')
-		ret = parse_texture(trimmed + 3, &data->textures.north);
-	else if (trimmed[0] == 'S' && trimmed[1] == 'O' && trimmed[2] == ' ')
-		ret = parse_texture(trimmed + 3, &data->textures.south);
-	else if (trimmed[0] == 'E' && trimmed[1] == 'A' && trimmed[2] == ' ')
-		ret = parse_texture(trimmed + 3, &data->textures.east);
-	else if (trimmed[0] == 'W' && trimmed[1] == 'E' && trimmed[2] == ' ')
-		ret = parse_texture(trimmed + 3, &data->textures.west);
-	else if (trimmed[0] == 'F' && trimmed[1] == ' ')
-		ret = parse_color(trimmed + 2, &data->floor);
-	else if (trimmed[0] == 'C' && trimmed[1] == ' ')
-		ret = parse_color(trimmed + 2, &data->ceiling);
-	else if (trimmed[0] == '1' || trimmed[0] == '0' || trimmed[0] == ' ')
-		ret = -1;
-	free(trimmed);
-	return (ret);
+		return (free(trimmed), 1);
+	ret = parse_texture_element(trimmed, data);
+	if (ret != -2)
+		return (free(trimmed), ret);
+	ret = parse_color_element(trimmed, data);
+	if (ret != -2)
+		return (free(trimmed), ret);
+	if (trimmed[0] == '1' || trimmed[0] == '0' || trimmed[0] == ' ')
+		return (free(trimmed), -1);
+	return (free(trimmed), print_error("Invalid line in file"), 0);
 }
 
 int	parse_file(char *filename, t_data *data)
@@ -79,15 +71,14 @@ int	parse_file(char *filename, t_data *data)
 			return (close(fd), print_error("Missing elements"), 0);
 		ret = parse_element(line, data);
 		free(line);
-		if (ret == -1)
-			break ;
+		if (ret == 0)
+			return (close(fd), 0);
 	}
-	if (!all_elements_parsed(data))
-		return (close(fd), print_error("Missing elements"), 0);
+	if (!skip_to_map(fd, data))
+		return (close(fd), 0);
 	if (!parse_map(fd, data))
 		return (close(fd), 0);
-	close(fd);
-	return (1);
+	return (close(fd), 1);
 }
 
 int	main(int argc, char **argv)

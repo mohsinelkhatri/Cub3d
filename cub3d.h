@@ -6,7 +6,7 @@
 /*   By: melkhatr <melkhatr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 13:23:30 by melkhatr          #+#    #+#             */
-/*   Updated: 2025/12/13 15:17:43 by melkhatr         ###   ########.fr       */
+/*   Updated: 2025/12/15 11:34:34 by melkhatr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,10 +95,19 @@ int				is_valid_char(char c);
 void			init_data(t_data *data);
 char			**realloc_map(char **map, int new_size);
 int				is_player_char(char c);
+int				check_file_extension(char *filename);
+int				all_elements_parsed(t_data *data);
 void			set_north_south(t_data *data, char orientation);
 void			set_east_west(t_data *data, char orientation);
 void			set_player_direction(t_data *data, char orientation);
 int				process_player_cell(t_data *data, int x, int y);
 int				check_position_walls(t_data *data, int x, int y);
+int				skip_to_map(int fd, t_data *data);
+int				check_space_sequence(char *str, int i, int space_count);
+int				validate_rgb_value(int value);
+int				parse_rgb_values(char **rgb, t_color *color);
+int				validate_rgb_string(char *str);
+int				parse_element(char *line, t_data *data);
+
 char			get_char_at(t_data *data, int x, int y);
 #endif

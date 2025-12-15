@@ -6,7 +6,7 @@
 #    By: melkhatr <melkhatr@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/12/13 13:17:26 by melkhatr          #+#    #+#              #
-#    Updated: 2025/12/13 15:21:10 by melkhatr         ###   ########.fr        #
+#    Updated: 2025/12/15 11:34:15 by melkhatr         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,6 +14,8 @@ NAME = cub3d
 CC = cc
 CFLAGS = -Wall -Wextra -Werror -g
 SRCS = cub3d.c \
+       utils_pars.c \
+       check_pars.c \
        pars_texture.c \
        pars_map.c \
        valid_map.c \

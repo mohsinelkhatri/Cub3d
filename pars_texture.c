@@ -6,81 +6,96 @@
 /*   By: melkhatr <melkhatr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 13:20:15 by melkhatr          #+#    #+#             */
-/*   Updated: 2025/12/13 14:47:05 by melkhatr         ###   ########.fr       */
+/*   Updated: 2025/12/15 11:35:03 by melkhatr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "cub3d.h"
 
+static int	has_invalid_spacing(char *str)
+{
+	int	i;
+	int	space_count;
+
+	i = 0;
+	space_count = 0;
+	while (str[i])
+	{
+		if (check_space_sequence(str, i, space_count))
+			return (1);
+		if (str[i] == ' ' || str[i] == '\t')
+			space_count++;
+		else if (str[i] != '\n')
+			space_count = 0;
+		i++;
+	}
+	return (0);
+}
+
+static char	*extract_path(char *str)
+{
+	int		i;
+	int		len;
+	char	*path;
+
+	i = 0;
+	while (str[i] && (str[i] == ' ' || str[i] == '\t'))
+		i++;
+	len = 0;
+	while (str[i + len] && str[i + len] != ' ' && str[i + len] != '\t'
+		&& str[i + len] != '\n')
+		len++;
+	if (len == 0)
+		return (NULL);
+	path = malloc(len + 1);
+	if (!path)
+		return (NULL);
+	len = 0;
+	while (str[i] && str[i] != ' ' && str[i] != '\t' && str[i] != '\n')
+		path[len++] = str[i++];
+	path[len] = '\0';
+	return (path);
+}
+
+static int	has_trailing_content(char *str, char *path)
+{
+	int	i;
+	int	path_len;
+
+	i = 0;
+	while (str[i] && (str[i] == ' ' || str[i] == '\t'))
+		i++;
+	path_len = ft_strlen(path);
+	i += path_len;
+	while (str[i])
+	{
+		if (str[i] != ' ' && str[i] != '\t' && str[i] != '\n')
+			return (1);
+		i++;
+	}
+	return (0);
+}
+
 int	parse_texture(char *line, char **texture)
 {
-	char	*trimmed;
 	char	*path;
 	int		fd;
-	int		i;
 
 	if (*texture != NULL)
 		return (print_error("Duplicate texture"), 0);
-	trimmed = ft_strtrim(line);
-	if (!trimmed || trimmed[0] == '\0')
-		return (free(trimmed), print_error("Empty texture path"), 0);
-	i = 0;
-	while (trimmed[i] && trimmed[i] != ' ' && trimmed[i] != '\n')
-		i++;
-	trimmed[i] = '\0';
-	fd = open(trimmed, O_RDONLY);
+	if (has_invalid_spacing(line))
+		return (print_error("Invalid texture path format"), 0);
+	path = extract_path(line);
+	if (!path || path[0] == '\0')
+		return (free(path), print_error("Empty texture path"), 0);
+	if (has_trailing_content(line, path))
+		return (free(path), print_error("Invalid content after texture"), 0);
+	fd = open(path, O_RDONLY);
 	if (fd < 0)
-		return (free(trimmed), print_error("Cannot open texture file"), 0);
+		return (free(path), print_error("Cannot open texture file"), 0);
 	close(fd);
-	path = ft_strdup(trimmed);
-	free(trimmed);
-	if (!path)
-		return (print_error("Memory allocation failed"), 0);
 	*texture = path;
 	return (1);
-}
-
-int	validate_rgb_value(int value)
-{
-	return (value >= 0 && value <= 255);
-}
-
-int	parse_rgb_values(char **rgb, t_color *color)
-{
-	int	i;
-
-	i = 0;
-	while (rgb[i])
-		i++;
-	if (i != 3)
-		return (print_error("Invalid RGB format"), 0);
-	color->r = ft_atoi(rgb[0]);
-	color->g = ft_atoi(rgb[1]);
-	color->b = ft_atoi(rgb[2]);
-	if (!validate_rgb_value(color->r) || !validate_rgb_value(color->g)
-		|| !validate_rgb_value(color->b))
-		return (print_error("RGB values must be 0-255"), 0);
-	color->hex = (color->r << 16) | (color->g << 8) | color->b;
-	return (1);
-}
-
-int	validate_rgb_string(char *str)
-{
-	int	i;
-	int	comma_count;
-
-	i = 0;
-	comma_count = 0;
-	while (str[i])
-	{
-		if (str[i] == ',')
-			comma_count++;
-		else if (!ft_isdigit(str[i]) && str[i] != ' ' && str[i] != '\n'
-			&& str[i] != '\t')
-			return (0);
-		i++;
-	}
-	return (comma_count == 2);
 }
 
 int	parse_color(char *line, t_color *color)

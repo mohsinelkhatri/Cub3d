@@ -6,7 +6,7 @@
 /*   By: melkhatr <melkhatr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 13:21:55 by melkhatr          #+#    #+#             */
-/*   Updated: 2025/12/13 15:21:32 by melkhatr         ###   ########.fr       */
+/*   Updated: 2025/12/15 11:35:15 by melkhatr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,8 @@ int	process_player_cell(t_data *data, int x, int y)
 	data->player.pos_y = y + 0.5;
 	set_player_direction(data, data->map.grid[y][x]);
 	data->map.grid[y][x] = '0';
+	if (!check_position_walls(data, x, y))
+		return (0);
 	return (1);
 }
 
@@ -31,8 +33,7 @@ int	is_map_line(char *line)
 	i = 0;
 	while (line[i] && line[i] != '\n')
 	{
-		if (line[i] != '0' && line[i] != '1' && line[i] != ' ' && line[i] != 'N'
-			&& line[i] != 'S' && line[i] != 'E' && line[i] != 'W')
+		if (!is_valid_char(line[i]))
 			return (0);
 		i++;
 	}
@@ -41,15 +42,47 @@ int	is_map_line(char *line)
 
 int	check_position_walls(t_data *data, int x, int y)
 {
-	if (get_char_at(data, x - 1, y) == ' ' || get_char_at(data, x + 1, y) == ' '
-		|| get_char_at(data, x, y - 1) == ' ' || get_char_at(data, x, y
-			+ 1) == ' ')
+	char	c;
+
+	c = get_char_at(data, x - 1, y);
+	if (c == ' ' || c == '\0')
 		return (0);
+	c = get_char_at(data, x + 1, y);
+	if (c == ' ' || c == '\0')
+		return (0);
+	c = get_char_at(data, x, y - 1);
+	if (c == ' ' || c == '\0')
+		return (0);
+	c = get_char_at(data, x, y + 1);
+	if (c == ' ' || c == '\0')
+		return (0);
+	return (1);
+}
+
+int	validate_map_characters(t_data *data)
+{
+	int	y;
+	int	x;
+
+	y = 0;
+	while (y < data->map.height)
+	{
+		x = 0;
+		while (data->map.grid[y][x])
+		{
+			if (!is_valid_char(data->map.grid[y][x]))
+				return (print_error("Invalid character in map"), 0);
+			x++;
+		}
+		y++;
+	}
 	return (1);
 }
 
 int	validate_map(t_data *data)
 {
+	if (!validate_map_characters(data))
+		return (0);
 	if (!check_player(data))
 		return (0);
 	if (!validate_walls(data))
